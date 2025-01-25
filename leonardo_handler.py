@@ -14,8 +14,6 @@ class LeonardoHandler:
                 json={
                     "prompt": prompt,
                     "negative_prompt": "",
-                    "imageWidth": 512,
-                    "imageHeight": 512,
                     "modelId": "ac614f96-1082-45bf-be9d-757f2d31c174",  # Убедитесь, что это правильный modelId
                     "scheduler": "EULER_DISCRETE"
                 }
