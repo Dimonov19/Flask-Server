@@ -4,61 +4,54 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import os
 from datetime import datetime
-import webuiapi
 import base64
 from PIL import Image
 import io
 import requests  # Для загрузки изображений по URL
 from io import BytesIO
 
+# Создаем приложение FastAPI
 app = FastAPI()
 
+# Убедимся, что директория для изображений существует
 os.makedirs("public_images", exist_ok=True)
 app.mount("/images", StaticFiles(directory="public_images"), name="images")
 
+
+# Модель для обработки запросов
 class ImageRequest(BaseModel):
     prompt: str
 
+
 @app.post("/generate")
 async def generate_image(request: Request, data: ImageRequest):
+    """
+    Генерация изображения на основе запроса.
+    """
     try:
-        api = webuiapi.WebUIApi()
+        # Заглушка для генерации изображения (здесь можно подключить свою логику)
+        # Например, интеграция с вашей моделью
+        prompt = data.prompt
+        # Генерируем изображение (здесь можно заменить на свой генератор)
+        image = Image.new("RGB", (512, 512), color=(255, 0, 0))  # Пример заглушки
 
-        result = api.txt2img(
-            prompt=data.prompt,
-            negative_prompt="",
-            seed=-1,
-            steps=20,
-            cfg_scale=7.0,
-            width=512,
-            height=512,
-            sampler_name="Euler a"
-        )
-
-        # Сохраняем изображение в память
-        img_byte_arr = io.BytesIO()
-        result.image.save(img_byte_arr, format='PNG')
-        img_byte_arr = img_byte_arr.getvalue()
-
-        # Конвертируем в base64
-        base64_image = base64.b64encode(img_byte_arr).decode('utf-8')
-
-        # Сохраняем файл
+        # Сохраняем изображение
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"generated_{timestamp}.png"
         image_path = os.path.join("public_images", filename)
-        result.image.save(image_path)
+        image.save(image_path)
 
+        # Получаем базовый URL
         base_url = str(request.base_url)
         if "ngrok" in request.headers.get("host", ""):
             base_url = f"https://{request.headers.get('host')}/"
 
+        # Ссылка на изображение
         image_url = f"{base_url}images/{filename}"
 
         return {
-            "success": True, 
-            "image_url": image_url,
-            "image_data": base64_image
+            "success": True,
+            "image_url": image_url
         }
 
     except Exception as e:
@@ -70,6 +63,9 @@ async def generate_image(request: Request, data: ImageRequest):
 
 @app.post("/convert-url-to-base64")
 async def convert_url_to_base64(request: Request):
+    """
+    Конвертация изображения по URL в Base64.
+    """
     try:
         body = await request.json()
         image_url = body.get("image_url")
