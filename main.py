@@ -8,9 +8,6 @@ import traceback
 app = Flask(__name__)
 CORS(app)
 
-# Получаем порт из переменной окружения, если не задан — используем 5001
-port = int(os.environ.get("PORT", 5001))
-
 @app.route('/generate', methods=['POST'])
 def generate():
     try:
@@ -46,4 +43,5 @@ def generate():
         return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=port)
+    # Обновляем код для Render, где используется переменная окружения для порта
+    app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
