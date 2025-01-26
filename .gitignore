@@ -1,6 +1,0 @@
-__pycache__/
-*.pyc
-images/
-.env
-venv/
-*.log
