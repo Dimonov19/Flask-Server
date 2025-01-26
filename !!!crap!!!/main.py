@@ -13,6 +13,8 @@ def generate():
         data = request.get_json()
         prompt = data.get('prompt', '')
 
+        print(f"Prompt received in Flask server: {prompt}")
+
         # Генерация изображения через Leonardo AI
         leonardo = LeonardoHandler()
         image_path = leonardo.generate_image(prompt)
@@ -20,13 +22,17 @@ def generate():
         if not image_path:
             return jsonify({"success": False, "error": "Failed to generate image"}), 400
 
-        # Загрузка в Roblox
+        print(f"Generated image path: {image_path}")
+
+        # Загрузка изображения в Roblox
         roblox = RobloxUploader()
         result = roblox.upload_image(image_path)
 
         if not result.get("success"):
             print(f"Upload failed: {result.get('error')}")
             return jsonify({"success": False, "error": result.get('error')}), 400
+
+        print(f"Roblox upload result: {result}")
 
         return jsonify({
             "success": True,
@@ -35,10 +41,8 @@ def generate():
         })
 
     except Exception as e:
-        print(f"Error in generate endpoint:")
-        print(f"Exception type: {type(e)}")
-        print(f"Exception message: {str(e)}")
-        print(f"Traceback:\n{traceback.format_exc()}")
+        print(f"Error in generate endpoint: {e}")
+        traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == '__main__':

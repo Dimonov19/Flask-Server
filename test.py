@@ -8,7 +8,7 @@ def test_image_generation():
         "Accept": "application/json"
     }
     data = {
-        "prompt": "cat"
+        "prompt": "a cute robot in pixel art style"
     }
 
     print(f"Sending request to: {url}")

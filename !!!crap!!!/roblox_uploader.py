@@ -9,39 +9,47 @@ class RobloxUploader:
         self.base_url = "https://apis.roblox.com"
         self.user_id = ROBLOX_USER_ID
 
-    def _get_image_id_from_decal(self, decal_id):
-        """Получает Image ID из Decal, используя Studio API"""
+    def _get_creator_hub_image_id(self, decal_id):
+        """Получаем ID изображения через Creator Hub API"""
         headers = {
             'x-api-key': self.api_key,
             'Accept': 'application/json'
         }
 
-        # Попытка 1: Используем Studio Asset Info API
         try:
-            url = f"{self.base_url}/asset-types-api/v1/asset/{decal_id}"
-            response = requests.get(url, headers=headers)
-            print(f"Studio Asset Info response: {response.status_code}")
+            # Запрашиваем информацию о связанных ассетах из Creator Hub
+            url = f"{self.base_url}/creator-hub/v1/assets/details"
+            params = {
+                'assetId': decal_id
+            }
+            
+            print(f"\nRequesting Creator Hub details for decal: {decal_id}")
+            response = requests.get(url, headers=headers, params=params)
+            print(f"Creator Hub response: {response.status_code}")
             print(f"Response content: {response.text}")
 
             if response.status_code == 200:
                 data = response.json()
-                return data.get('sourceAssetId')
-        except Exception as e:
-            print(f"Error in Studio Asset Info: {str(e)}")
+                # Проверяем различные возможные поля в ответе
+                image_id = data.get('sourceAssetId') or data.get('imageAssetId')
+                if image_id:
+                    return str(image_id)
 
-        # Попытка 2: Используем Metadata API
-        try:
-            url = f"{self.base_url}/universes/v1/assets/{decal_id}/metadata"
+            # Альтернативный эндпоинт
+            url = f"{self.base_url}/creator-hub/v1/marketplace/assets/{decal_id}"
+            print(f"\nTrying marketplace endpoint")
             response = requests.get(url, headers=headers)
-            print(f"Metadata API response: {response.status_code}")
+            print(f"Marketplace response: {response.status_code}")
             print(f"Response content: {response.text}")
 
             if response.status_code == 200:
                 data = response.json()
-                return data.get('imageId') or data.get('sourceImageId')
-        except Exception as e:
-            print(f"Error in Metadata API: {str(e)}")
+                image_id = data.get('sourceAssetId') or data.get('imageAssetId')
+                if image_id:
+                    return str(image_id)
 
+        except Exception as e:
+            print(f"Error getting Creator Hub details: {str(e)}")
         return None
 
     def upload_image(self, image_path):
@@ -63,9 +71,13 @@ class RobloxUploader:
                     'fileContent': ('image.png', image_file, 'image/png')
                 }
                 
-                upload_url = f"{self.base_url}/assets/v1/assets"
                 print("Sending upload request...")
-                response = requests.post(upload_url, headers=headers, files=files)
+                response = requests.post(
+                    f"{self.base_url}/assets/v1/assets", 
+                    headers=headers, 
+                    files=files
+                )
+                
                 print(f"Upload response status: {response.status_code}")
                 print(f"Upload response content: {response.text}")
                 
@@ -74,8 +86,7 @@ class RobloxUploader:
                     if not operation_id:
                         return {"success": False, "error": "No operation ID received"}
                     
-                    print(f"Got operation ID: {operation_id}")
-                    
+                    # Ждем завершения операции и пытаемся получить ID
                     for attempt in range(10):
                         print(f"Checking operation status (attempt {attempt + 1}/10)")
                         
@@ -89,7 +100,10 @@ class RobloxUploader:
                             if data.get('done'):
                                 decal_id = data.get('response', {}).get('assetId')
                                 if decal_id:
-                                    image_id = self._get_image_id_from_decal(decal_id)
+                                    # Небольшая пауза перед запросом Creator Hub
+                                    time.sleep(2)
+                                    # Получаем image_id через Creator Hub
+                                    image_id = self._get_creator_hub_image_id(decal_id)
                                     print(f"Success! Decal ID: {decal_id}, Image ID: {image_id}")
                                     return {
                                         "success": True,
