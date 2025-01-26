@@ -1,4 +1,3 @@
-import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from leonardo_handler import LeonardoHandler
@@ -43,5 +42,4 @@ def generate():
         return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == '__main__':
-    # Обновляем код для Render, где используется переменная окружения для порта
-    app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
+    app.run(port=5001)
