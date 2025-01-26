@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import requests
 import json
 
@@ -31,6 +32,14 @@ def test_image_generation():
 
     except Exception as e:
         print(f"Error occurred: {str(e)}")
+=======
+from leonardo_handler import LeonardoHandler
+>>>>>>> bc6487fb8ec7a81889db0e508d60910c0fb226c5
 
 if __name__ == "__main__":
-    test_image_generation()
+    prompt = input("Введите запрос: ")
+    result = LeonardoHandler.generate_image(prompt)
+    if result["success"]:
+        print("Image URL:", result["image_url"])
+    else:
+        print("Error:", result["error"])
