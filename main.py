@@ -1,15 +1,16 @@
-import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from leonardo_handler import LeonardoHandler
 from roblox_uploader import RobloxUploader
 import traceback
+import os
 
 app = Flask(__name__)
 CORS(app)
 
-# Получаем порт из переменной окружения, если не задан — используем 5001
-port = int(os.environ.get("PORT", 5001))
+@app.route('/')
+def home():
+    return "Server is working"
 
 @app.route('/generate', methods=['POST'])
 def generate():
@@ -46,4 +47,6 @@ def generate():
         return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=port)
+    # Используем динамический порт
+    port = int(os.environ.get("PORT", 5001))
+    app.run(host="0.0.0.0", port=port)
