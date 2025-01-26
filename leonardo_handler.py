@@ -4,7 +4,7 @@ import os
 import time
 from config import LEONARDO_API_KEY
 
-class LeonardoHandler:  # Здесь была ошибка - класс назывался LeonardoHandler, а не LeonardoAI
+class LeonardoHandler:
     def __init__(self):
         self.api_key = LEONARDO_API_KEY
         self.base_url = "https://cloud.leonardo.ai/api/rest/v1"
@@ -15,11 +15,11 @@ class LeonardoHandler:  # Здесь была ошибка - класс назы
 
     def generate_image(self, prompt):
         try:
-            # Создаем директорию для изображений, если её нет
+            # Создаём директорию для изображений, если её нет
             if not os.path.exists('images'):
                 os.makedirs('images')
 
-            # Отправляем запрос на генерацию
+            # Отправляем запрос на генерацию изображения
             generation_url = f"{self.base_url}/generations"
             generation_data = {
                 "prompt": prompt,
@@ -36,39 +36,43 @@ class LeonardoHandler:  # Здесь была ошибка - класс назы
                 json=generation_data
             )
 
-            print(f"Generation request status: {response.status_code}")
-            print(f"Response content: {response.text}")
+            print(f"Статус запроса на генерацию: {response.status_code}")
+            print(f"Ответ: {response.text}")
 
             if response.status_code != 200:
-                print(f"Failed to start generation: {response.text}")
+                print(f"Не удалось начать генерацию: {response.text}")
                 return None
 
-            generation_id = response.json()["sdGenerationJob"]["generationId"]
+            # Получаем ID генерации
+            generation_id = response.json().get("sdGenerationJob", {}).get("generationId")
+            if not generation_id:
+                print("Не получен ID генерации")
+                return None
 
-            # Ждем завершения генерации
+            # Ожидаем завершения генерации
             image_url = self._wait_for_generation(generation_id)
             if not image_url:
                 return None
 
-            # Сохраняем изображение
+            # Скачиваем изображение
             image_path = "images/generated_image.png"
             image_response = requests.get(image_url)
 
             if image_response.status_code == 200:
                 with open(image_path, 'wb') as f:
                     f.write(image_response.content)
-                print(f"\nImage saved to: {image_path}")
+                print(f"Изображение сохранено: {image_path}")
                 return image_path
             else:
-                print(f"Failed to download image: {image_response.text}")
+                print(f"Не удалось скачать изображение: {image_response.text}")
                 return None
 
         except Exception as e:
-            print(f"Error in generate_image:")
-            print(f"Exception type: {type(e)}")
-            print(f"Exception message: {str(e)}")
+            print(f"Ошибка в generate_image:")
+            print(f"Тип исключения: {type(e)}")
+            print(f"Сообщение исключения: {str(e)}")
             import traceback
-            print(f"Traceback:\n{traceback.format_exc()}")
+            print(f"Трейсбек:\n{traceback.format_exc()}")
             return None
 
     def _wait_for_generation(self, generation_id):
@@ -77,10 +81,10 @@ class LeonardoHandler:  # Здесь была ошибка - класс назы
 
         for attempt in range(max_attempts):
             try:
-                print(f"\nChecking generation status (attempt {attempt + 1}/{max_attempts})")
+                print(f"\nПроверка статуса генерации (попытка {attempt + 1}/{max_attempts})")
                 response = requests.get(status_url, headers=self.headers)
-                print(f"Status check response: {response.status_code}")
-                print(f"Response content: {response.text}")
+                print(f"Ответ на проверку статуса: {response.status_code}")
+                print(f"Ответ: {response.text}")
 
                 if response.status_code == 200:
                     data = response.json()
@@ -88,14 +92,14 @@ class LeonardoHandler:  # Здесь была ошибка - класс назы
 
                     if generations and generations[0].get("url"):
                         image_url = generations[0]["url"]
-                        print(f"\nImage URL received: {image_url}")
+                        print(f"\nURL изображения получен: {image_url}")
                         return image_url
 
                 time.sleep(2)
 
             except Exception as e:
-                print(f"Error checking generation status: {str(e)}")
+                print(f"Ошибка при проверке статуса генерации: {str(e)}")
                 time.sleep(2)
 
-        print("Generation timed out")
+        print("Время ожидания генерации истекло")
         return None
